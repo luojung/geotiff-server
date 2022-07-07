@@ -1,4 +1,6 @@
 // Taken from https://stackoverflow.com/a/14438954
+import tilebelt from 'tilebelt'
+
 export function getUniqueValues (arr) {
   function onlyUnique (value, index, self) {
     return self.indexOf(value) === index
@@ -10,6 +12,44 @@ export function findUniqueBandShortNamesInString (string) {
   var regExpressionTester = /(b)\d+/g
   return getUniqueValues(string.match(regExpressionTester))
 }
+
+export function  latLonTotile(lng, lat, zoom)
+{
+    var out_tile=[];
+    out_tile.x = Math.floor((lng + 180.0) / 360.0 * Math.pow(2.0, zoom))
+
+    var lat_ = Math.PI * lat / 180;
+    out_tile.y = Math.floor((1.0 - Math.log( Math.tan(lat_) + (1.0 / Math.cos(lat_))) /Math.PI) /   2.0 * Math.pow(2.0, zoom))
+    out_tile.z = zoom;
+
+    return out_tile;
+};
+
+export function lonlat2WebMercator(lon,lat){
+  var xy=[];
+  var x =  lon*20037508.34/180;  
+  var y =Math.log(Math.tan((90+lat)*Math.PI/360))/(Math.PI/180); 
+  y = y *20037508.34/180; 
+　xy[0]=x; 
+　xy[1]=y; 
+　return xy; 
+}
+export function webMercator2lonlat(x,y){
+  var lonlat= [];
+  var lon = x/20037508.34*180;  
+  var lat = y/20037508.34*180;  
+  lat= 180/Math.PI*(2*Math.atan(Math.exp(lat*Math.PI/180))-Math.PI/2);  
+  lonlat[0] = lon;  
+  lonlat[1] = lat; 
+  return lonlat;
+}
+
+export function  webMercator2tile(x, y, zoom)
+{
+  var [lon,lat]=webMercator2lonlat(x, y)
+  return tilebelt.pointToTile (lon,lat,zoom)
+};
+
 
 export function latLonToUtm (coords, zone, requiresSouthernHemiAdjustment) {
   const lat = coords[1]

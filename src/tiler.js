@@ -15,14 +15,35 @@ export function createBbox (x, y, z) {
   return tilebelt.tileToBBOX([x, y, z])
 }
 
-export function createRgbTile (rData, gData, bData, percentiles) {
-  for (let i = 0; i < frameData.length / 4; i++) {
-    frameData[i * 4] = rescaleValueTo256(rData[i], percentiles)
-    frameData[(i * 4) + 1] = rescaleValueTo256(gData[i], percentiles)
-    frameData[(i * 4) + 2] = rescaleValueTo256(bData[i], percentiles)
-    frameData[(i * 4) + 3] = 0
+export function createRgbTile (rData, gData, bData, percentiles,nodata,res) {
+  // console.log("rData:",rData[0],rData[1],rData[2])
+  if(percentiles[0]==0&&percentiles[1]==255){
+    for (let i = 0; i < frameData.length / 4; i++) {
+      frameData[i * 4] = rData[i]
+      frameData[(i * 4) + 1] = gData[i]
+      frameData[(i * 4) + 2] = bData[i]
+      if(rData[i]==undefined||gData[i]==undefined||bData[i]==undefined ||(rData[i]==0&&gData[i]==0&&bData[i]==0) ||(rData[i]==nodata&&gData[i]==nodata&&bData[i]==nodata)){
+           frameData[(i * 4) + 3] = 0
+      }
+      else
+          frameData[(i * 4) + 3] = 255
+    }
   }
-  return encodeImageData(frameData)
+  else{
+    for (let i = 0; i < frameData.length / 4; i++) {
+      frameData[i * 4] = rescaleValueTo256(rData[i], percentiles)
+      frameData[(i * 4) + 1] = rescaleValueTo256(gData[i], percentiles)
+      frameData[(i * 4) + 2] = rescaleValueTo256(bData[i], percentiles)
+      if(rData[i]==undefined||gData[i]==undefined||bData[i]==undefined ||(rData[i]==0&&gData[i]==0&&bData[i]==0)||(rData[i]==nodata&&gData[i]==nodata&&bData[i]==nodata)){
+        frameData[(i * 4) + 3] = 0
+      }
+      else
+          frameData[(i * 4) + 3] = 255
+    }
+  }
+  
+  // return encodeImageData(frameData)
+  return encodePng(frameData,res)
 }
 
 export function createSingleBandTile (bands, expression, colorRamp) {
@@ -46,10 +67,31 @@ export function createSingleBandTile (bands, expression, colorRamp) {
   return encodeImageData(frameData)
 }
 
-function encodeImageData (data) {
+export function encodeImageData (data) {
   return jpeg.encode({
     data: data,
     width: tileWidth,
     height: tileHeight
   })
+}
+
+
+export function encodePng(data ,res){
+  var fs = require("fs"),
+  PNG = require("pngjs").PNG;
+  
+  let png = new PNG({
+    width: tileWidth,
+    height: tileHeight,
+    bitDepth: 8,
+    colorType: 6,
+    inputHasAlpha: true,
+  });
+  
+  png.data = data
+  // var dst = fs.createWriteStream( "./out.png");
+  const readStream=png.pack().pipe(res)
+
+  return  readStream
+  
 }
